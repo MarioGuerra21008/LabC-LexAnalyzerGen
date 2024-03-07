@@ -133,8 +133,6 @@ def question_mark(expression):
     return "".join(stack)
 
 def kleene_closure(expression):
-    if not expression or not expression[0].isalnum():
-        raise Exception("Expresión regular inválida. Operador '+' sin símbolo alfanumérico o al principio de la expresión.")
     i = 0
     new_expression = ''
     while i < len(expression):
