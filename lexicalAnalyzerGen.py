@@ -188,10 +188,10 @@ def leer_archivo_yalex():
         variable, definition = function.split("=")
         variable = variable.strip()
         definition = definition.strip()
-        arrayForVariable = []
+        arrayForRegex = []
         arrayForDefinition = []
-        arrayForVariable.append(variable)
-        print("Identificadores de variables: ", str(arrayForVariable))
+        arrayForRegex.append(variable)
+        print("Identificadores de variables: ", str(arrayForRegex))
         elements = ""
 
         if definition[0] == '[':
@@ -219,9 +219,9 @@ def leer_archivo_yalex():
                         elements = ""
                     if elements.count('"') == 2: #Caso donde la variable está delimitada por ""
                         elements = elements[1:-1]
+                        newElements = ""
                         if chr(92) in elements:
                             for char in elements:
-                                newElements = ""
                                 newElements += char
                                 if newElements.count(chr(92)) == 2:
                                     if newElements[:-1] == "\s":
@@ -240,10 +240,11 @@ def leer_archivo_yalex():
                                 elements = bytes(escapedCharacter, "utf-8").decode("unicode_escape")
                                 arrayForDefinition.append(ord(elements))
                                 print("Abr 5 ", str(arrayForDefinition))
-                            else:
-                                for i in range(len(elements)):
-                                    elements[i] = ord(elements[i])
-                                arrayForDefinition.extend(elements)
+                        else:
+                            elements = list(elements)
+                            for i in range(len(elements)):
+                                elements[i] = ord(elements[i])
+                            arrayForDefinition.extend(elements)
                 else:
                     if elements != '\n':
                         if elements != ' ':
@@ -298,41 +299,41 @@ def leer_archivo_yalex():
                 tokensArray.append(token)
                 print("TokenArray 4 ", str(tokensArray))
             arrayForDefinition.extend(tokensArray)
-        arrayForVariable.append(arrayForDefinition)
-        yalexFunctions2.append(arrayForVariable)
+        arrayForRegex.append(arrayForDefinition)
+        yalexFunctions2.append(arrayForRegex)
     for i in range(len(yalexFunctions2)):
         bool = True
         for op in ["(", ")", "|", "*", "?", "+"]:
             if op in yalexFunctions2[i][1]:
                 bool = False
         if bool == False:
-            arrayForVariable = []
+            arrayForRegex = []
             for j in yalexFunctions2[i][1]:
-                arrayForVariable.append(j)
-                arrayForVariable.append('.')
-            for k in range(len(arrayForVariable)):
-                    if arrayForVariable[k] == "(":
-                        if arrayForVariable[k+1] == ".":
-                            arrayForVariable[k+1] = ""
-                    if arrayForVariable[k] == ")":
-                        if arrayForVariable[k-1] == ".":
-                            arrayForVariable[k-1] = ""
-                    if arrayForVariable[k] == "*":
-                        if arrayForVariable[k-1] == ".":
-                            arrayForVariable[k-1] = ""
-                    if arrayForVariable[k] == "|":
-                        if arrayForVariable[k-1] == ".":
-                            arrayForVariable[k-1] = ""
-                        if arrayForVariable[k+1] == ".":
-                            arrayForVariable[k+1] = ""
-                    if arrayForVariable[k] == "+":
-                        if arrayForVariable[k-1] == ".":
-                            arrayForVariable[k-1] = ""
-                    if arrayForVariable[k] == "?":
-                        if arrayForVariable[k-1] == ".":
-                            arrayForVariable[k-1] = ""
-            arrayForVariable = [element for element in arrayForVariable if element != ""]
-            yalexFunctions2[i][1] = arrayForVariable[:-1]
+                arrayForRegex.append(j)
+                arrayForRegex.append('.')
+            for k in range(len(arrayForRegex)):
+                    if arrayForRegex[k] == "(":
+                        if arrayForRegex[k+1] == ".":
+                            arrayForRegex[k+1] = ""
+                    if arrayForRegex[k] == ")":
+                        if arrayForRegex[k-1] == ".":
+                            arrayForRegex[k-1] = ""
+                    if arrayForRegex[k] == "*":
+                        if arrayForRegex[k-1] == ".":
+                            arrayForRegex[k-1] = ""
+                    if arrayForRegex[k] == "|":
+                        if arrayForRegex[k-1] == ".":
+                            arrayForRegex[k-1] = ""
+                        if arrayForRegex[k+1] == ".":
+                            arrayForRegex[k+1] = ""
+                    if arrayForRegex[k] == "+":
+                        if arrayForRegex[k-1] == ".":
+                            arrayForRegex[k-1] = ""
+                    if arrayForRegex[k] == "?":
+                        if arrayForRegex[k-1] == ".":
+                            arrayForRegex[k-1] = ""
+            arrayForRegex = [element for element in arrayForRegex if element != ""]
+            yalexFunctions2[i][1] = arrayForRegex[:-1]
         else:
             unicode_array = []
             funcArray = []

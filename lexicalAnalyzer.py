@@ -99,8 +99,7 @@ def shunting_yard(expression): #Función para realizar el algoritmo shunting yar
          return ''.join(output_queue)
 
 def question_mark(expression):
-    if not expression or not expression[0].isalnum():
-        raise Exception("Expresión regular inválida. Operador '?' sin símbolo alfanumérico o al principio de la expresión.")
+
     stack = []
     groups = ""
     in_group = ""
