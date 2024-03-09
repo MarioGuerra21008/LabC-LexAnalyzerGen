@@ -137,7 +137,10 @@ def leer_archivo_yalex():
         if len(n) != 0:
             if n.count("'") == 2 or n.count('"') == 2:
                 n = n[1:-1]
-            yalexRegex2.append(n)
+                ascii_nums = [str(ord(char)) for char in n]
+                yalexRegex2.append('.'.join(ascii_nums))
+            else:
+                yalexRegex2.append(n)
             print("Print de YalexRegex2, ", str(yalexRegex2), "\n")
     
     for function in yalexFunctions:
@@ -245,7 +248,10 @@ def leer_archivo_yalex():
                             tokensArray.append(token)
                             print("TokenArray 2 ", str(tokensArray))
                             token = ""
-                        tokensArray.append(char)
+                        if char == '.':
+                            tokensArray.append(ord(char))
+                        else:
+                            tokensArray.append(char)
                         print("TokenArray 3 ", str(tokensArray))
                     else:
                         token += char
