@@ -22,128 +22,84 @@ yalexArchive4 = "slr-4.yal"
 
 def insert_concatenation(expression): #Función insert_concatenation para poder agregar los operadores al arreglo result.
     result = [] #Lista result para agregar los operadores.
-    operators = "#+|*()?" #Operadores en la lista.
-    for i in range(len(expression)): #Por cada elemento según el rango de la variable expression:
-        char = expression[i]
-        result.append(char) #Se agrega caracter por caracter al arreglo.
+    operators = "+|*()?" #Operadores en la lista.
+    i = 0
+    while i < len(expression): #Por cada elemento según el rango de la variable expression:
+        token = expression[i]
+        
+        if token.isdigit():
+            number = token
+            while i+1 < len(expression) and expression[i+1].isdigit():
+                number += expression[i+1]
+                i += 1
+                token = expression[i]
+            result.append(number)
+        else:   
+            result.append(token) #Se agrega caracter por caracter al arreglo.
         if i + 1 < len(expression): #Si la expresión es menor que la cantidad de elementos en el arreglo, se coloca en la posición i + 1.
             lookahead = expression[i + 1]
-            position = expression[i]
-            lookbehind = expression[i - 1]
+            if isinstance(token, str) or token == 'ε' or token == '#':
+                if lookahead not in operators and lookahead != '.' and not (
+                        isinstance(lookahead, str) and isinstance(token, str)):
+                    result.append('.')
+            elif isinstance(token, int) and lookahead == '(':
+                result.append('.')
+            elif isinstance(token, str) and isinstance(lookahead, str):
+                result.append('.')
+            elif token == '*' and lookahead == '(':
+                result.append('.')
+            elif token == '*' and isinstance(lookahead, str):
+                result.append('.')
+            elif token == '+' and lookahead == '(':
+                result.append('.')
+            elif token == '+' and isinstance(lookahead, str):
+                result.append('.')
+            elif token == '?' and lookahead == '(':
+                result.append('.')
+            elif token == '?' and isinstance(lookahead, str):
+                result.append('.')
+            elif token == ')' and isinstance(lookahead, str):
+                result.append('.')
+            elif token == ')' and lookahead == '(':
+                result.append('.')
+        i += 1
 
-            if char.isalnum() or char == 'ε':
-                if lookahead not in operators and lookahead != '.': #Si el caracter es una letra o un dígito, no está en los operadores y no es unc concatenación:
-                    result.append('.') #Agrega una concatenación a la lista result.
-            elif char.isalnum() and lookahead == '(':
-                result.append('.')
-            elif char.isalnum() and lookahead.isalnum():
-                result.append('.')
-            elif char == '*' and lookahead == '(':
-                result.append('.')
-            elif char == '*' and lookahead.isalnum():
-                result.append('.')
-            elif char == ')' and lookahead.isalnum():
-                result.append('.')
-            elif char.isalnum() and lookahead == '(':
-                result.append('.')
-            elif char == ')' and lookahead == '(':
-                result.append('.')
-            elif char == '#' and lookahead.isalnum():
-                result.append('.')
-
-    return ''.join(result) #Devuelve el resultado.
+    return result #Devuelve el resultado.
 
 def shunting_yard(expression): #Función para realizar el algoritmo shunting yard.
-     if '+' in expression:
-         new_expression = kleene_closure(expression)
+    precedence = {'|': 1, '.': 2, '*': 3, '+': 3, '?': 3}  # Orden de precedencia entre operadores.
+    output_queue = []  # Lista de salida como notación postfix.
+    operator_stack = []
 
-     if '?' in expression:
-         new_expression = question_mark(expression)
-     
-     precedence = {'#': 1, '|': 1, '.': 2, '*': 3, '+': 3, '?':3} # Orden de precedencia entre operadores.
+    expression = insert_concatenation(expression)
 
-     output_queue = [] #Lista de salida como notación postfix.
-     operator_stack = []
-     i = 0 #Inicializa contador.
-     
-     if '?' in expression:
-        expression = insert_concatenation(new_expression)
-     elif '+' in expression:
-        expression = insert_concatenation(new_expression)
-     elif '?' in expression and '+' in expression:
-         expression = insert_concatenation(new_expression)
-     else:
-        expression = insert_concatenation(expression) #Llama a la función para que se ejecute.
+    for token in expression:
+        if token.isalnum() or token == '#':
+            output_queue.append(token)
+        elif token in "|*.+?":
+            while (operator_stack and operator_stack[-1] != '(' and
+                   precedence[token] <= precedence.get(operator_stack[-1], 0)):
+                output_queue.append(operator_stack.pop())
+            operator_stack.append(token)
+        elif token == '(':
+            operator_stack.append(token)
+        elif token == ')':
+            while operator_stack and operator_stack[-1] != '(':
+                output_queue.append(operator_stack.pop())
+            operator_stack.pop()
+        elif token == '.':
+            while operator_stack and operator_stack[-1] != '(':
+                output_queue.append(operator_stack.pop())
+            if operator_stack and operator_stack[-1] == '(':
+                operator_stack.pop()
 
-     while i < len(expression): #Mientras i sea menor que la longitud de la expresión.
-         token = expression[i] #El token es igual al elemento en la lista en la posición i.
-         if token.isalnum() or token == 'ε': #Si el token es una letra o un dígito, o es epsilon.
-             output_queue.append(token) #Se agrega a output_queue.
-         elif token in "|*.#": #Si hay alguno de estos operadores en el token:
-             while (operator_stack and operator_stack[-1] != '(' and #Se toma en cuenta la precedencia y el orden de operadores para luego añadirla al queue y a la pila.
-                    precedence[token] <= precedence.get(operator_stack[-1], 0)):
-                 output_queue.append(operator_stack.pop())
-             operator_stack.append(token)
-         elif token == '(': #Si el token es una apertura de paréntesis se añade a la pila de operadores.
-             operator_stack.append(token)
-         elif token == ')': #Si el token es una cerradura de paréntesis se añade al queue y pila de operadores, se ejecuta un pop en ambas.
-             while operator_stack and operator_stack[-1] != '(':
-                 output_queue.append(operator_stack.pop())
-             operator_stack.pop()
-         elif token == '.': #Si el token es un punto o concatenación se realiza un pop en la pila y se añade al output_queue.
-             while operator_stack and operator_stack[-1] != '(':
-                 output_queue.append(operator_stack.pop())
-             if operator_stack[-1] == '(':
-                 operator_stack.pop()
-         i += 1 #Suma uno al contador.
+    while operator_stack:
+        output_queue.append(operator_stack.pop())
 
-     while operator_stack: #Mientras se mantenga el operator_stack, por medio de un pop se agregan los elementos al output_queue.
-         output_queue.append(operator_stack.pop())
-
-     if not output_queue: #Si no hay un queue de salida, devuelve epsilon.
-         return 'ε'
-     else: #Si hay uno, lo muestra en pantalla.
-         return ''.join(output_queue)
-
-def question_mark(expression):
-
-    stack = []
-    groups = ""
-    in_group = ""
-    for i, ch in enumerate(expression):
-        if ch in "{([":
-            groups += ch
-        elif ch in "})]":
-            groups = groups[:-1]
-            if len(groups) == 0:
-                in_group = in_group[1:]
-                not_questioned = question_mark(in_group)
-                stack.append("(" + not_questioned + ")?")  # Cambio aquí: agrega el operador '?' después de la agrupación
-                continue
-        if len(groups) != 0:
-            in_group += ch
-        else:
-            stack.append(ch)
-    return "".join(stack)
-
-def kleene_closure(expression):
-    i = 0
-    new_expression = ''
-    while i < len(expression):
-        if expression[i] == '+' and i + 1 < len(expression) and expression[i-1].isalnum():
-            new_expression += f'({expression[i-1]}+)'  # Cambio aquí: agrupa el símbolo precedente y agrega el operador '+'
-            i += 1
-        elif expression[i] == '+' and i + 1 >= len(expression) and expression[i-1].isalnum():
-            new_expression += f'({expression[i-1]}+)'  # Cambio aquí: agrupa el símbolo precedente y agrega el operador '+'
-            i += 1
-        else:
-            new_expression += expression[i]
-            i += 1
-    return new_expression
-
+    return output_queue
 
 def leer_archivo_yalex():
-    with open(yalexArchive1, "r") as yalexArchive:
+    with open(yalexArchive4, "r") as yalexArchive:
         content = yalexArchive.read()
     
     # Separar el contenido por 'let' o 'rule' para procesarlo por bloques
@@ -365,8 +321,8 @@ def leer_archivo_yalex():
         if element != "|":
             yalexRegex3.append("(")
             yalexRegex3.append(element)
-            #yalexRegex3.append(".")
-            #yalexRegex3.append("#" + str(element))
+            yalexRegex3.append(".")
+            yalexRegex3.append("#")
             yalexRegex3.append(")")
         else:
             yalexRegex3.append(element)
@@ -397,7 +353,8 @@ class Node:
         self.position = 0
 
 def build_syntax_tree(regex):
-    regex_postfix = shunting_yard(regex +'#')  # Convertir la expresión regular a formato postfix con '#' al final
+    regex_postfix = shunting_yard(regex)  # Convertir la expresión regular a formato postfix con '#' al final
+    print("Esto es mi expresión en postfix: ", regex_postfix)
     stack = []
     nodes_calculated = set()  # Conjunto para rastrear qué nodos ya han sido calculados
     leaf_calculated = set()
@@ -405,7 +362,7 @@ def build_syntax_tree(regex):
     nodo_position = 1
 
     for char in regex_postfix:
-        if char.isalnum() or char == 'ε':
+        if char.isalnum() or char == 'ε' or char == '#':
             node = Node(char)
             node.position = position_counter
             position_counter += 1
@@ -413,7 +370,7 @@ def build_syntax_tree(regex):
             nodo_position += 1
             stack.append(node)
             leaf_calculated.add(node)
-        elif char in ".|*+?#":  # Operadores
+        elif char in ".|*+?":  # Operadores
             if char == '.':
                 if len(stack) < 2:
                     raise ValueError("Insuficientes operandos para la concatenación")
@@ -465,43 +422,40 @@ def build_syntax_tree(regex):
                 position_counter += 1
                 stack.append(node)
                 nodes_calculated.add(node)
-            elif char == '#':
-                if stack:
-                    child = stack.pop()
-                    if isinstance(child, Node):
-                        node = Node('.')
-                        node.left = child
-                        node.right = Node('#')
-                        node.position = position_counter
-                        position_counter += 1
-                        node.num = nodo_position
-                        node.right.num = nodo_position
-                        nodo_position += 1
-                        print(f"Creando nodo concatenación con hijo izquierdo y hijo derecho #")
-                        stack.append(node)
-                        nodes_calculated.add(node)
-                    else:
-                        node = Node('#')
-                        node.right = child
-                        node.position = position_counter
-                        position_counter += 1
-                        node.num = nodo_position
-                        nodo_position += 1
-                        print(f"Creando nodo marcador final con hijo {child.value}")
-                        stack.append(node)
-                        leaf_calculated.add(node)
-                        
+        elif char == '#':
+            if stack:
+                child = stack.pop()
+                if isinstance(child, Node):
+                    node = Node('.')
+                    node.left = child
+                    node.right = Node('#')
+                    node.position = position_counter
+                    position_counter += 1
+                    node.num = nodo_position
+                    node.right.num = nodo_position
+                    nodo_position += 1
+                    print(f"Creando nodo concatenación con hijo izquierdo y hijo derecho #")
+                    stack.append(node)
+                    nodes_calculated.add(node)
                 else:
                     node = Node('#')
+                    node.right = child
                     node.position = position_counter
                     position_counter += 1
                     node.num = nodo_position
                     nodo_position += 1
-                    print("Creando nodo marcador final sin hijos")
+                    print(f"Creando nodo marcador final con hijo {child.value}")
                     stack.append(node)
-                
-
-    return stack.pop(), nodes_calculated,leaf_calculated
+                    leaf_calculated.add(node)
+            else:
+                node = Node('#')
+                node.position = position_counter
+                position_counter += 1
+                node.num = nodo_position
+                nodo_position += 1
+                print("Creando nodo marcador final sin hijos")
+                stack.append(node)
+    return stack.pop(), nodes_calculated, leaf_calculated
 
 def visualize_tree(root):
     G = nx.DiGraph()
@@ -557,7 +511,7 @@ def nullable(node):
     elif node.value == '+':
         return nullable(node.left)
     elif node.value == '?':
-        return True if nullable(node.left) else nullable(node.right)
+        return nullable(node.left)
     elif node.value == '#':
         return False
     elif node.value.isalnum():
