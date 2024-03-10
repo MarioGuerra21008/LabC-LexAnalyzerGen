@@ -99,8 +99,14 @@ def shunting_yard(expression): #Función para realizar el algoritmo shunting yar
     return output_queue
 
 def leer_archivo_yalex():
-    with open(yalexArchive4, "r") as yalexArchive:
+    with open(yalexArchive1, "r") as yalexArchive:
         content = yalexArchive.read()
+        if not content:
+            raise ValueError("El archivo .yal está vacío.")
+    
+    # Verifica si el archivo no contiene bloques 'let' o 'rule'
+    if 'let' not in content or 'rule' not in content:
+        raise ValueError("El archivo .yal no contiene bloques 'let' o 'rule'.")
     
     # Separar el contenido por 'let' o 'rule' para procesarlo por bloques
     blocks = []
@@ -140,13 +146,22 @@ def leer_archivo_yalex():
                 ascii_nums = [str(ord(char)) for char in n]
                 yalexRegex2.append('.'.join(ascii_nums))
             else:
+                # Verifica si se encuentran dos "|" consecutivos
+                if n == "|":
+                    if yalexRegex2 and yalexRegex2[-1] == "|":
+                        raise ValueError("Se encontró un token no definido.")
                 yalexRegex2.append(n)
             print("Print de YalexRegex2, ", str(yalexRegex2), "\n")
+        if yalexRegex2 and yalexRegex2[0] == "|":
+            raise ValueError("La expresión no es válida.")
     
     for function in yalexFunctions:
         variable, definition = function.split("=")
         variable = variable.strip()
         definition = definition.strip()
+        # Verifica si la definición de la variable está vacía
+        if not definition:
+            raise ValueError(f"La variable '{variable}' no tiene una definición después del signo igual (=).")
         arrayForRegex = []
         arrayForDefinition = []
         arrayForRegex.append(variable)
@@ -743,36 +758,41 @@ def hopcroft_minimization_dfa_direct(dfa_direct):
     return min_dfa_direct
 
 if __name__ == "__main__":
-    regexList = leer_archivo_yalex()
-    print("Nuestra expresión regular es la siguiente: ", regexList)
+    try:
+        regexList = leer_archivo_yalex()
 
-    # Inicializamos una cadena vacía para almacenar los elementos
-    regex = ''
+        print("Nuestra expresión regular es la siguiente: ", regexList)
 
-    # Recorremos el arreglo y concatenamos cada elemento a la cadena
-    for element in regexList:
-        regex += str(element)
-    
-    print("Y esta es nuestra expresión regular: ", regex)
-    
-    # Construcción directa (AFD).
-    
-    syntax_tree, nodes_calculated, leaf_calculated = build_syntax_tree(regex)
-    print("Árbol Sintáctico:")
-    visualize_tree(syntax_tree)
+        # Inicializamos una cadena vacía para almacenar los elementos
+        regex = ''
 
-    root = encontrar_nodo_posicion_mas_grande(syntax_tree)
+        # Recorremos el arreglo y concatenamos cada elemento a la cadena
+        for element in regexList:
+            regex += str(element)
+        
+        print("Y esta es nuestra expresión regular: ", regex)
+        
+        # Construcción directa (AFD).
+        
+        syntax_tree, nodes_calculated, leaf_calculated = build_syntax_tree(regex)
+        print("Árbol Sintáctico:")
+        visualize_tree(syntax_tree)
 
-    follow_pos = {node.num: set() for node in leaf_calculated}
+        root = encontrar_nodo_posicion_mas_grande(syntax_tree)
 
-    for num, conjunto in follow_pos.items():
-        print(f"Posición: {num}, Conjunto: {conjunto}")
+        follow_pos = {node.num: set() for node in leaf_calculated}
 
-    # Calcula firstpos, lastpos y followpos
+        for num, conjunto in follow_pos.items():
+            print(f"Posición: {num}, Conjunto: {conjunto}")
 
-    for node in nodes_calculated:
-        followpos(node)
+        # Calcula firstpos, lastpos y followpos
 
-    print("\nFollowpos:")
-    for num, conjunto in follow_pos.items():
-        print(f"Posición: {num} : {conjunto}")
+        for node in nodes_calculated:
+            followpos(node)
+
+        print("\nFollowpos:")
+        for num, conjunto in follow_pos.items():
+            print(f"Posición: {num} : {conjunto}")
+    except Exception as e:
+        print("Error: ", str(e))
+        sys.exit(1)
